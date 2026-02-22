@@ -26,6 +26,7 @@ export interface OCRResult {
 export interface AIResult {
   summary?: string;
   success: boolean;
+  status?: 'Active' | 'Ghost' | 'Error';
   error?: string;
 }
 

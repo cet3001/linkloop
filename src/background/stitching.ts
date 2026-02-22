@@ -38,8 +38,25 @@ export class ImageStitcher {
   }
 
   public async getFinalImage(): Promise<string> {
-    const canvas = this.canvases.get(0);
+    let canvas = this.canvases.get(0);
     if (!canvas) return '';
+
+    // Optimization: Resize if exceeding limits
+    const MAX_WIDTH = 1200;
+    const MAX_HEIGHT = 4000;
+    
+    if (canvas.width > MAX_WIDTH || canvas.height > MAX_HEIGHT) {
+      const scale = Math.min(MAX_WIDTH / canvas.width, MAX_HEIGHT / canvas.height);
+      const newWidth = Math.floor(canvas.width * scale);
+      const newHeight = Math.floor(canvas.height * scale);
+      
+      const resizedCanvas = new OffscreenCanvas(newWidth, newHeight);
+      const resizedCtx = resizedCanvas.getContext('2d');
+      if (resizedCtx) {
+        resizedCtx.drawImage(canvas, 0, 0, newWidth, newHeight);
+        canvas = resizedCanvas;
+      }
+    }
 
     const blob = await canvas.convertToBlob({ type: 'image/png' });
     return new Promise((resolve) => {

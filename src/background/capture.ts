@@ -27,9 +27,43 @@ export class CaptureCoordinator {
 
   public async handleRegionCapture(region: Region, tabId: number): Promise<void> {
     const dataUrl = await chrome.tabs.captureVisibleTab();
-    // In a real implementation, we would crop the image here using OffscreenCanvas
-    // For now, let's assume we send the full screenshot or a cropped version
-    await this.processAI(dataUrl, region, tabId);
+    
+    // Create an image bitmap to get dimensions and for drawing
+    const response = await fetch(dataUrl);
+    const blob = await response.blob();
+    const imageBitmap = await createImageBitmap(blob);
+    
+    // Calculate scaling if devicePixelRatio is involved
+    // chrome.tabs.captureVisibleTab usually returns images at Device Pixel Ratio
+    const scale = imageBitmap.width / (await this.getTabWidth(tabId));
+    
+    const cropX = Math.round(region.x * scale);
+    const cropY = Math.round(region.y * scale);
+    const cropW = Math.round(region.width * scale);
+    const cropH = Math.round(region.height * scale);
+
+    const canvas = new OffscreenCanvas(cropW, cropH);
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(imageBitmap, 
+        cropX, cropY, cropW, cropH, // Source
+        0, 0, cropW, cropH        // Destination
+      );
+      
+      const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
+      const reader = new FileReader();
+      const croppedDataUrl = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(croppedBlob);
+      });
+      
+      await this.processAI(croppedDataUrl, region, tabId);
+    }
+  }
+
+  private async getTabWidth(tabId: number): Promise<number> {
+    const tab = await chrome.tabs.get(tabId);
+    return tab.width || 1280; // Fallback
   }
 
   private async processAI(imageData: string, region?: Region, tabId?: number): Promise<void> {

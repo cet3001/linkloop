@@ -61,13 +61,22 @@ export class PageScroller {
     document.documentElement.style.overflow = 'hidden';
 
     const numArrangements = arrangements.length;
+    const STEP_TIMEOUT = 5000; // 5 seconds per step
 
     for (let i = 0; i < numArrangements; i++) {
       const [x, y] = arrangements[i];
       window.scrollTo(x, y);
 
-      // Wait for things to settle (sticky headers, animations)
-      await new Promise(resolve => setTimeout(resolve, EXTENSION_CONSTANTS.CAPTURE_DELAY));
+      // Timeout protection for environmental settling
+      try {
+        await Promise.race([
+          new Promise(resolve => setTimeout(resolve, EXTENSION_CONSTANTS.CAPTURE_DELAY)),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Scroll timeout')), STEP_TIMEOUT))
+        ]);
+      } catch (e) {
+        console.warn('Scroll stabilization timed out, continuing with partial results');
+        break; 
+      }
 
       const data: CaptureData = {
         msg: 'capture',
