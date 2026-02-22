@@ -1,0 +1,21 @@
+{
+  "name": "linkloop",
+  "version": "1.0.0",
+  "description": "Universal AI Vision overlay for social media outreach",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "watch": "webpack --config webpack.config.js --watch",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "ts-loader": "^9.4.4",
+    "copy-webpack-plugin": "^11.0.0",
+    "jest": "^29.6.1",
+    "ts-jest": "^29.1.1",
+    "@types/chrome": "^0.0.237",
+    "@types/jest": "^29.5.3"
+  }
+}

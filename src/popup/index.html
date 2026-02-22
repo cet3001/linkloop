@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkLoop</title>
+    <style>
+      :root {
+        --bg: #1a1a1a;
+        --surface: #2d2d2d;
+        --border: #3d3d3d;
+        --accent: #0070f3;
+        --text: #ffffff;
+        --text-muted: #a0a0a0;
+      }
+      body {
+        width: 320px;
+        margin: 0;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+      h1 {
+        font-size: 18px;
+        margin-top: 0;
+        margin-bottom: 24px;
+        letter-spacing: -0.02em;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      button:hover {
+        background: var(--border);
+        border-color: var(--accent);
+      }
+      button#captureRegion {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      button#captureRegion:hover {
+        background: #0061d5;
+      }
+      .footer {
+        margin-top: 24px;
+        font-size: 11px;
+        color: var(--text-muted);
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>LinkLoop</h1>
+    <div class="actions">
+      <button id="captureRegion">
+        <span>Targeted Selection</span>
+      </button>
+      <button id="captureFullPage">
+        <span>Deep Profile Audit</span>
+      </button>
+    </div>
+    <div class="footer">Strategic Vision Engine v1.0</div>
+    <script src="index.js"></script>
+  </body>
+</html>
