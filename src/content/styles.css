@@ -134,39 +134,87 @@
   align-items: center;
 }
 
-.linkloop-copy-btn {
+.linkloop-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.linkloop-copy-btn, .linkloop-insert-btn {
   background: var(--ll-border);
   color: var(--ll-text-primary);
   border: none;
-  padding: 4px 10px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.linkloop-insert-btn {
+  background: linear-gradient(180deg, var(--ll-accent) 0%, #0056b3 100%);
+  color: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .linkloop-copy-btn:hover {
-  background: var(--ll-accent);
+  background: var(--ll-text-secondary);
+  color: var(--ll-bg-primary);
 }
 
-.linkloop-copy-btn.copied {
-  background: #10b981;
+.linkloop-insert-btn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 112, 243, 0.3);
 }
 
-.linkloop-result-label {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+.linkloop-insert-btn:active {
+  transform: translateY(0);
+}
+
+/* Paywall Styling */
+.linkloop-paywall {
+  text-align: center;
+  padding: 40px 24px;
+  background: linear-gradient(180deg, var(--ll-bg-primary) 0%, var(--ll-bg-secondary) 100%);
+}
+
+.linkloop-paywall-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 10px var(--ll-accent));
+}
+
+.linkloop-paywall h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--ll-text-primary);
+}
+
+.linkloop-paywall p {
   color: var(--ll-text-secondary);
-}
-
-.linkloop-result-content {
   font-size: 14px;
   line-height: 1.6;
-  color: var(--ll-text-primary);
-  white-space: pre-wrap;
+  margin-bottom: 24px;
+}
+
+.linkloop-upgrade-btn {
+  background: linear-gradient(180deg, var(--ll-accent) 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.linkloop-upgrade-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 10px 20px rgba(0, 112, 243, 0.2);
 }
 
 .linkloop-close-results {

@@ -14,13 +14,16 @@ export const SYSTEM_PROMPTS = {
 
             ### STEP 3: BRANCHING LOGIC
             - IF 'Active Profile': Focus on the 'Recent Post' hook as the primary anchor.
-            - IF 'Ghost Profile': Trigger 'GHOST PROTOCOL'. Generate a 'Value-Add' script offering to help the prospect fix their profile gaps (missing banner, weak bio, etc.).
-            - **GHOST PROTOCOL ADDITION**: Provide one specific "Authority Post Hook" (the first sentence of a post) that the prospect should write to fix their inactive profile.
+            - IF 'Ghost Profile': Trigger 'GHOST PROTOCOL'. 
+                - Generate a 'First-Touch Strategy' based SPECIFICALLY on the prospect's industry (e.g., if they are in SaaS, mention churn/growth; if Real Estate, mention market shifts/interest rates).
+                - Provide one specific "Authority Post Hook" (the first sentence of a post) that the prospect should write to fix their inactive profile.
 
             ### STEP 4: GENERATIVE OUTPUT (NO TEMPLATES)
             Generate three distinct hooks:
             1. **Mutual Connection/Network Hook**: Based on shared industry markers or common associations.
-            2. **Recent Post/Recent Value Hook**: (Only if Active) A high-level curiosity hook referencing a specific detail from their post. (If Ghost, provide the 'Authority Post Hook' here).
+            2. **Activity / Strategic Value Add**: 
+                - If Active: A high-level curiosity hook referencing a specific detail from their post. 
+                - If Ghost: A 'First-Touch Strategy' + 'Persona-Based Value Add' script tailored to their industry.
             3. **Company Milestone/Authority Hook**: Referencing a project or company achievement found in the visual data.
 
             CRITICAL RULES:

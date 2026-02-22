@@ -8,16 +8,24 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
 
   switch (message.type) {
     case 'STITCH_IMAGE':
-      coordinator.handleStitch(message.data).then(success => {
-        sendResponse({ success });
-      });
-      return true; // Async
+      if (tabId) {
+        coordinator.handleStitch(message.data, tabId).then(success => {
+          sendResponse({ success });
+        });
+        return true; // Async
+      }
+      break;
 
     case 'CAPTURE_REGION':
       if (tabId) {
         coordinator.handleRegionCapture(message.data.region, tabId).catch(console.error);
         sendResponse({ success: true });
       }
+      break;
+
+    case 'OPEN_OPTIONS':
+      chrome.runtime.openOptionsPage();
+      sendResponse({ success: true });
       break;
   }
 });

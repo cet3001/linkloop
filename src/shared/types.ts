@@ -26,7 +26,7 @@ export interface OCRResult {
 export interface AIResult {
   summary?: string;
   success: boolean;
-  status?: 'Active' | 'Ghost' | 'Error';
+  status?: 'Active' | 'Ghost' | 'Error' | 'LimitReached';
   error?: string;
 }
 
@@ -36,7 +36,8 @@ export type MessageType =
   | 'SCROLL_PAGE'
   | 'STITCH_IMAGE'
   | 'AI_PROCESS'
-  | 'SHOW_RESULTS';
+  | 'SHOW_RESULTS'
+  | 'OPEN_OPTIONS';
 
 export interface Message {
   type: MessageType;

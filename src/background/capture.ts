@@ -1,6 +1,8 @@
-import { ImageStitcher } from './stitching';
+import { ImageStitcher, ImageOptimizer } from './stitching';
 import { AIService } from './ai';
 import { CaptureData, Region } from '../shared/types';
+
+import { UsageTracker } from './usage';
 
 export class CaptureCoordinator {
   private stitcher = new ImageStitcher();
@@ -8,15 +10,25 @@ export class CaptureCoordinator {
 
   constructor() {}
 
-  public async handleStitch(data: CaptureData): Promise<boolean> {
+  public async handleStitch(data: CaptureData, tabId: number): Promise<boolean> {
     try {
+      // Check usage on first segment
+      if (data.x === 0 && data.y === 0) {
+        const { allowed } = await UsageTracker.canScan();
+        if (!allowed) {
+          chrome.tabs.sendMessage(tabId, { type: 'SHOW_RESULTS', data: { status: 'LimitReached' } });
+          return false;
+        }
+      }
+
       const dataUrl = await chrome.tabs.captureVisibleTab();
       await this.stitcher.stitch(data, dataUrl);
       
       if (data.complete === 1) {
         const finalImage = await this.stitcher.getFinalImage();
         this.stitcher.clear();
-        await this.processAI(finalImage);
+        await UsageTracker.recordScan();
+        await this.processAI(finalImage, undefined, tabId);
       }
       return true;
     } catch (e) {
@@ -26,15 +38,18 @@ export class CaptureCoordinator {
   }
 
   public async handleRegionCapture(region: Region, tabId: number): Promise<void> {
+    const { allowed } = await UsageTracker.canScan();
+    if (!allowed) {
+      chrome.tabs.sendMessage(tabId, { type: 'SHOW_RESULTS', data: { status: 'LimitReached' } });
+      return;
+    }
+
     const dataUrl = await chrome.tabs.captureVisibleTab();
-    
-    // Create an image bitmap to get dimensions and for drawing
+    // ... cropping logic remains same ...
     const response = await fetch(dataUrl);
     const blob = await response.blob();
     const imageBitmap = await createImageBitmap(blob);
     
-    // Calculate scaling if devicePixelRatio is involved
-    // chrome.tabs.captureVisibleTab usually returns images at Device Pixel Ratio
     const scale = imageBitmap.width / (await this.getTabWidth(tabId));
     
     const cropX = Math.round(region.x * scale);
@@ -46,17 +61,18 @@ export class CaptureCoordinator {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(imageBitmap, 
-        cropX, cropY, cropW, cropH, // Source
-        0, 0, cropW, cropH        // Destination
+        cropX, cropY, cropW, cropH, 
+        0, 0, cropW, cropH
       );
       
-      const croppedBlob = await canvas.convertToBlob({ type: 'image/png' });
+      const optimizedBlob = await ImageOptimizer.optimize(canvas);
       const reader = new FileReader();
       const croppedDataUrl = await new Promise<string>((resolve) => {
         reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(croppedBlob);
+        reader.readAsDataURL(optimizedBlob);
       });
       
+      await UsageTracker.recordScan();
       await this.processAI(croppedDataUrl, region, tabId);
     }
   }
