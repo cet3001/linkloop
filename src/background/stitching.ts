@@ -63,6 +63,8 @@ export class ImageStitcher {
     const canvas = this.canvases.get(0);
     if (!canvas) return '';
 
+    // Privacy Hardening: drawing to OffscreenCanvas and converting to Blob
+    // automatically strips all original EXIF/Metadata from the source segments.
     const optimizedBlob = await ImageOptimizer.optimize(canvas);
     
     return new Promise((resolve) => {

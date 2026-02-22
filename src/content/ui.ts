@@ -6,7 +6,7 @@ export class ResultRenderer {
 
   constructor() {}
 
-  public render(result: AIResult): void {
+  public render(result: AIResult, statusLine: string = '[SYSTEM: READY]'): void {
     this.remove();
 
     this.container = document.createElement('div');
@@ -21,13 +21,22 @@ export class ResultRenderer {
     const root = document.createElement('div');
     root.className = 'linkloop-results-container';
 
-    // Handle Limit Reached
+    // Status Line
+    const statusLineEl = document.createElement('div');
+    statusLineEl.className = 'linkloop-status-line';
+    statusLineEl.innerHTML = `<span>STATE:</span> <span class="linkloop-status-active">${statusLine}</span>`;
+    root.appendChild(statusLineEl);
+
+    const body = document.createElement('div');
+    body.className = 'linkloop-results-body';
+
     if (result.status === 'LimitReached') {
-      this.renderPaywall(root);
+      this.renderPaywall(body);
     } else {
-      this.renderResults(root, result);
+      this.renderResults(body, result);
     }
 
+    root.appendChild(body);
     shadow.appendChild(root);
     document.body.appendChild(this.container);
   }
@@ -36,16 +45,14 @@ export class ResultRenderer {
     root.innerHTML = `
       <div class="linkloop-results-header">
         <div class="linkloop-header-main">
-          <h3>Daily Limit Reached</h3>
-          <span class="linkloop-badge linkloop-badge-ghost">Free Tier</span>
+          <h3>[AUTH_FAILURE: LIMIT_REACHED]</h3>
         </div>
         <button class="linkloop-close-results">&times;</button>
       </div>
       <div class="linkloop-results-body linkloop-paywall">
-        <div class="linkloop-paywall-icon">🚀</div>
-        <h2>Unlock Unlimited Strategic Audits</h2>
-        <p>You've reached your limit of 3 scans per 24 hours. Upgrade to LinkLoop Pro for unlimited vision-first outreach.</p>
-        <button class="linkloop-upgrade-btn">Upgrade to Pro</button>
+        <h2>REMAINING_SCANS: 0</h2>
+        <p>DAILY_LIMIT_EXCEEDED. AUTHENTICATE PRO_ACCOUNT TO BYPASS RESTRICTIONS.</p>
+        <button class="linkloop-upgrade-btn">ESTABLISH_PRO_LINK</button>
       </div>
     `;
 
@@ -59,33 +66,32 @@ export class ResultRenderer {
   private renderResults(root: HTMLElement, result: AIResult): void {
     const sections = this.parseMarkdown(result.summary || '');
     const isGhost = result.status === 'Ghost' || (result.summary?.includes('Ghost Profile') ?? false);
+    const badgeText = isGhost ? '[STATUS: LOW_SIGNAL]' : '[STATUS: HIGH_SIGNAL]';
     const badgeClass = isGhost ? 'linkloop-badge-ghost' : 'linkloop-badge-active';
-    const badgeText = isGhost ? 'Ghost Profile' : 'Active Profile';
 
     let html = `
       <div class="linkloop-results-header">
         <div class="linkloop-header-main">
-          <h3>Strategic Vision Audit</h3>
+          <h3>FORENSIC_OUTREACH_REPORT</h3>
           <span class="linkloop-badge ${badgeClass}">${badgeText}</span>
         </div>
         <button class="linkloop-close-results">&times;</button>
       </div>
-      <div class="linkloop-results-body">
     `;
 
     if (sections['PROFILE INVENTORY']) {
       html += `
         <div class="linkloop-inventory-card">
-          <div class="linkloop-result-label">Hidden Gem Identified</div>
+          <div class="linkloop-result-label">[DATA_POINT: HIDDEN_GEM]</div>
           <div class="linkloop-inventory-content">${sections['PROFILE INVENTORY']}</div>
         </div>
       `;
     }
 
     const hooks = [
-      { id: 'HOOK 1 (NETWORK)', label: 'Network Hook' },
-      { id: 'HOOK 2 (ACTIVITY / OPTIMIZATION)', label: isGhost ? 'Authority Post Hook' : 'Activity Hook' },
-      { id: 'HOOK 3 (MILESTONE)', label: 'Milestone Hook' }
+      { id: 'HOOK 1 (NETWORK)', label: '[HOOK: NETWORK]' },
+      { id: 'HOOK 2 (ACTIVITY / OPTIMIZATION)', label: isGhost ? '[LOW_SIGNAL_DETECTION: OPTIMIZATION_STRATEGY]' : '[HOOK: ACTIVITY]' },
+      { id: 'HOOK 3 (MILESTONE)', label: '[HOOK: MILESTONE]' }
     ];
 
     hooks.forEach(hook => {
@@ -95,8 +101,8 @@ export class ResultRenderer {
             <div class="linkloop-card-header">
               <span class="linkloop-result-label">${hook.label}</span>
               <div class="linkloop-card-actions">
-                <button class="linkloop-copy-btn" data-hook="${encodeURIComponent(sections[hook.id])}">Copy</button>
-                <button class="linkloop-insert-btn" data-hook="${encodeURIComponent(sections[hook.id])}">Insert</button>
+                <button class="linkloop-copy-btn" data-hook="${encodeURIComponent(sections[hook.id])}">COPY</button>
+                <button class="linkloop-insert-btn" data-hook="${encodeURIComponent(sections[hook.id])}">INSERT</button>
               </div>
             </div>
             <div class="linkloop-result-content">${sections[hook.id]}</div>
@@ -105,7 +111,6 @@ export class ResultRenderer {
       }
     });
 
-    html += `</div>`;
     root.innerHTML = html;
 
     root.querySelector('.linkloop-close-results')?.addEventListener('click', () => this.remove());
@@ -117,8 +122,8 @@ export class ResultRenderer {
         const text = decodeURIComponent(target.dataset.hook || '');
         navigator.clipboard.writeText(text).then(() => {
           const originalText = target.textContent;
-          target.textContent = 'Copied!';
-          setTimeout(() => target.textContent = originalText, 2000);
+          target.textContent = 'COPIED';
+          setTimeout(() => target.textContent = originalText, 1000);
         });
       });
     });
@@ -130,18 +135,16 @@ export class ResultRenderer {
         const text = decodeURIComponent(target.dataset.hook || '');
         
         if (!DOMInjector.insertText(text)) {
-          // If no input focus, try to find one
           DOMInjector.findAndFocusInput();
-          // Try again after small delay
           setTimeout(() => {
             if (DOMInjector.insertText(text)) {
-              this.showFeedback(target, 'Inserted!');
+              this.showFeedback(target, 'INSERTED');
             } else {
-              this.showFeedback(target, 'Click Input First', true);
+              this.showFeedback(target, 'ERR: NO_FOCUS', true);
             }
-          }, 100);
+          }, 50);
         } else {
-          this.showFeedback(target, 'Inserted!');
+          this.showFeedback(target, 'INSERTED');
         }
       });
     });
@@ -150,11 +153,11 @@ export class ResultRenderer {
   private showFeedback(btn: HTMLButtonElement, text: string, isError = false): void {
     const originalText = btn.textContent;
     btn.textContent = text;
-    if (isError) btn.style.color = '#ef4444';
+    if (isError) btn.style.color = '#FF0000';
     setTimeout(() => {
       btn.textContent = originalText;
       if (isError) btn.style.color = '';
-    }, 2000);
+    }, 1000);
   }
 
   private parseMarkdown(md: string): Record<string, string> {
@@ -173,6 +176,45 @@ export class ResultRenderer {
     });
     
     return sections;
+  }
+
+  public renderStatus(statusLine: string): void {
+    const existing = document.getElementById('linkloop-results-shadow');
+    let shadow: ShadowRoot;
+    
+    if (!existing) {
+      this.container = document.createElement('div');
+      this.container.id = 'linkloop-results-shadow';
+      shadow = this.container.attachShadow({ mode: 'open' });
+      
+      const styleLink = document.createElement('link');
+      styleLink.rel = 'stylesheet';
+      styleLink.href = chrome.runtime.getURL('content/styles.css');
+      shadow.appendChild(styleLink);
+      
+      document.body.appendChild(this.container);
+    } else {
+      shadow = existing.shadowRoot!;
+    }
+
+    // Update or Create Root
+    let root = shadow.querySelector('.linkloop-results-container') as HTMLElement;
+    if (!root) {
+      root = document.createElement('div');
+      root.className = 'linkloop-results-container';
+      shadow.appendChild(root);
+    }
+
+    root.innerHTML = `
+      <div class="linkloop-status-line">
+        <span>STATE:</span> <span class="linkloop-status-active">${statusLine}</span>
+      </div>
+      <div class="linkloop-results-header">
+        <div class="linkloop-header-main">
+          <h3>SYSTEM_INITIALIZING...</h3>
+        </div>
+      </div>
+    `;
   }
 
   public remove(): void {

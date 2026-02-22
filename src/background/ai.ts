@@ -54,12 +54,22 @@ export class AIService {
     });
 
     const data = await response.json();
-    const content = data.choices[0].message.content;
+    let content = data.choices[0].message.content as string;
     
+    // Hardening: Strip AI conversational filler
+    // Remove everything before the first '###' or '[' if the AI starts with a greeting
+    const firstMarkdownFlag = content.indexOf('###');
+    if (firstMarkdownFlag > 0) {
+      content = content.substring(firstMarkdownFlag);
+    }
+
+    // Secondary cleanup: strip common intro phrases if they still exist
+    content = content.replace(/^(Here is|Sure|As a forensics|Based on|I've analyzed).*\n+/gi, '');
+
     return {
       success: true,
-      summary: content,
-      status: content.includes('Active Profile') ? 'Active' : (content.includes('Ghost Profile') ? 'Ghost' : undefined)
+      summary: content.trim(),
+      status: content.includes('HIGH_SIGNAL') ? 'Active' : (content.includes('LOW_SIGNAL') ? 'Ghost' : undefined)
     };
   }
 
