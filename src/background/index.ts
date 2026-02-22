@@ -12,16 +12,22 @@ chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) =>
         coordinator.handleStitch(message.data, tabId).then(success => {
           sendResponse({ success });
         });
-        return true; // Async
+        return true;
       }
       break;
 
     case 'CAPTURE_REGION':
       if (tabId) {
-        coordinator.handleRegionCapture(message.data.region, tabId).catch(console.error);
+        coordinator.handleRegionCapture(message.data, tabId).catch(console.error);
         sendResponse({ success: true });
       }
       break;
+
+    case 'GET_SCREENSHOT':
+      chrome.tabs.captureVisibleTab((dataUrl) => {
+        sendResponse(dataUrl);
+      });
+      return true;
 
     case 'OPEN_OPTIONS':
       chrome.runtime.openOptionsPage();

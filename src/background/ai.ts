@@ -5,7 +5,7 @@ import { API_ENDPOINTS } from '../shared/constants';
 export class AIService {
   constructor() {}
 
-  public async analyzeVision(imageData: string, region?: Region): Promise<AIResult> {
+  public async analyzeVision(imageData: string, platform: string = 'GENERIC', region?: Region): Promise<AIResult> {
     const settings = await chrome.storage.local.get(['openaiKey', 'anthropicKey', 'selectedService']);
     const service = settings.selectedService || 'openai';
     const apiKey = service === 'openai' ? settings.openaiKey : settings.anthropicKey;
@@ -16,7 +16,7 @@ export class AIService {
 
     try {
       if (service === 'openai') {
-        return await this.callOpenAI(imageData, apiKey, region);
+        return await this.callOpenAI(imageData, apiKey, platform, region);
       } else {
         return await this.callAnthropic(imageData, apiKey, region);
       }
@@ -26,8 +26,10 @@ export class AIService {
     }
   }
 
-  private async callOpenAI(imageData: string, apiKey: string, region?: Region): Promise<AIResult> {
+  private async callOpenAI(imageData: string, apiKey: string, platform: string, region?: Region): Promise<AIResult> {
     const base64Image = imageData.split(',')[1];
+    const systemPrompt = SYSTEM_PROMPTS.STRATEGIC_VISION.replace('{{PLATFORM}}', platform);
+
     const response = await fetch(API_ENDPOINTS.OPENAI, {
       method: 'POST',
       headers: {
@@ -39,7 +41,7 @@ export class AIService {
         messages: [
           {
             role: 'system',
-            content: SYSTEM_PROMPTS.STRATEGIC_VISION
+            content: systemPrompt
           },
           {
             role: 'user',

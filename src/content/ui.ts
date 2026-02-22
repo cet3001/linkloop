@@ -1,5 +1,5 @@
 import { DOMInjector } from './injector';
-import { AIResult } from '../shared/types';
+import { AIResult, Region } from '../shared/types';
 
 export class ResultRenderer {
   private container: HTMLDivElement | null = null;
@@ -65,79 +65,87 @@ export class ResultRenderer {
 
   private renderResults(root: HTMLElement, result: AIResult): void {
     const sections = this.parseMarkdown(result.summary || '');
-    const isGhost = result.status === 'Ghost' || (result.summary?.includes('Ghost Profile') ?? false);
-    const badgeText = isGhost ? '[STATUS: LOW_SIGNAL]' : '[STATUS: HIGH_SIGNAL]';
-    const badgeClass = isGhost ? 'linkloop-badge-ghost' : 'linkloop-badge-active';
+    const strength = sections['SIGNAL_STRENGTH'] || 'UNKNOWN';
+    const badgeText = `[SIGNAL: ${strength}]`;
+    const badgeClass = strength.includes('HIGH') ? 'linkloop-badge-active' : 'linkloop-badge-ghost';
 
     let html = `
       <div class="linkloop-results-header">
         <div class="linkloop-header-main">
-          <h3>FORENSIC_OUTREACH_REPORT</h3>
+          <h3>[TARGET_DOSSIER: FORENSIC_REPORT]</h3>
           <span class="linkloop-badge ${badgeClass}">${badgeText}</span>
         </div>
         <button class="linkloop-close-results">&times;</button>
       </div>
     `;
 
-    if (sections['PROFILE INVENTORY']) {
+    if (sections['FRICTION_POINT']) {
       html += `
         <div class="linkloop-inventory-card">
-          <div class="linkloop-result-label">[DATA_POINT: HIDDEN_GEM]</div>
-          <div class="linkloop-inventory-content">${sections['PROFILE INVENTORY']}</div>
+          <div class="linkloop-result-label">[AUDIT_VECTOR: FRICTION_POINT]</div>
+          <div class="linkloop-inventory-content">${sections['FRICTION_POINT']}</div>
         </div>
       `;
     }
 
-    const hooks = [
-      { id: 'HOOK 1 (NETWORK)', label: '[HOOK: NETWORK]' },
-      { id: 'HOOK 2 (ACTIVITY / OPTIMIZATION)', label: isGhost ? '[LOW_SIGNAL_DETECTION: OPTIMIZATION_STRATEGY]' : '[HOOK: ACTIVITY]' },
-      { id: 'HOOK 3 (MILESTONE)', label: '[HOOK: MILESTONE]' }
-    ];
-
-    hooks.forEach(hook => {
-      if (sections[hook.id]) {
+    if (sections['FORENSIC_HOOKS']) {
+      const hooksText = sections['FORENSIC_HOOKS'];
+      const hookMatches = hooksText.match(/^\d+\.\s+\*\*.*?\*\*:\s+.*$/gm);
+      
+      if (hookMatches) {
+        hookMatches.forEach((hookText, index) => {
+          const cleanText = hookText.replace(/^\d+\.\s+\*\*.*?\*\*:\s+/, '').trim();
+          const label = hookText.match(/\*\*(.*?)\*\*/)?.[1] || `HOOK ${index + 1}`;
+          
+          html += `
+            <div class="linkloop-hook-card">
+              <div class="linkloop-card-header">
+                <span class="linkloop-result-label">[FORENSIC_HOOK: ${label}]</span>
+                <div class="linkloop-card-actions">
+                  <button class="linkloop-copy-btn" data-hook="${encodeURIComponent(cleanText)}">COPY</button>
+                  <button class="linkloop-insert-btn" data-hook="${encodeURIComponent(cleanText)}">INSERT</button>
+                </div>
+              </div>
+              <div class="linkloop-result-content">${cleanText}</div>
+            </div>
+          `;
+        });
+      } else {
         html += `
           <div class="linkloop-hook-card">
-            <div class="linkloop-card-header">
-              <span class="linkloop-result-label">${hook.label}</span>
-              <div class="linkloop-card-actions">
-                <button class="linkloop-copy-btn" data-hook="${encodeURIComponent(sections[hook.id])}">COPY</button>
-                <button class="linkloop-insert-btn" data-hook="${encodeURIComponent(sections[hook.id])}">INSERT</button>
-              </div>
-            </div>
-            <div class="linkloop-result-content">${sections[hook.id]}</div>
+            <div class="linkloop-result-content">${hooksText}</div>
           </div>
         `;
       }
-    });
+    }
 
     root.innerHTML = html;
+    this.attachHandlers(root);
+  }
 
+  private attachHandlers(root: HTMLElement): void {
     root.querySelector('.linkloop-close-results')?.addEventListener('click', () => this.remove());
     
-    // Copy Handlers
     root.querySelectorAll('.linkloop-copy-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const target = e.currentTarget as HTMLButtonElement;
         const text = decodeURIComponent(target.dataset.hook || '');
         navigator.clipboard.writeText(text).then(() => {
-          const originalText = target.textContent;
-          target.textContent = 'COPIED';
-          setTimeout(() => target.textContent = originalText, 1000);
+          this.showFeedback(target, 'COPIED');
         });
       });
     });
 
-    // Insert Handlers
     root.querySelectorAll('.linkloop-insert-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         const target = e.currentTarget as HTMLButtonElement;
         const text = decodeURIComponent(target.dataset.hook || '');
         
-        if (!DOMInjector.insertText(text)) {
+        const success = await DOMInjector.insertText(text);
+        if (!success) {
           DOMInjector.findAndFocusInput();
-          setTimeout(() => {
-            if (DOMInjector.insertText(text)) {
+          setTimeout(async () => {
+            if (await DOMInjector.insertText(text)) {
               this.showFeedback(target, 'INSERTED');
             } else {
               this.showFeedback(target, 'ERR: NO_FOCUS', true);
@@ -153,11 +161,11 @@ export class ResultRenderer {
   private showFeedback(btn: HTMLButtonElement, text: string, isError = false): void {
     const originalText = btn.textContent;
     btn.textContent = text;
-    if (isError) btn.style.color = '#FF0000';
+    if (isError) btn.style.color = '#FF3B30';
     setTimeout(() => {
       btn.textContent = originalText;
       if (isError) btn.style.color = '';
-    }, 1000);
+    }, 1500);
   }
 
   private parseMarkdown(md: string): Record<string, string> {
@@ -197,7 +205,6 @@ export class ResultRenderer {
       shadow = existing.shadowRoot!;
     }
 
-    // Update or Create Root
     let root = shadow.querySelector('.linkloop-results-container') as HTMLElement;
     if (!root) {
       root = document.createElement('div');
@@ -211,7 +218,7 @@ export class ResultRenderer {
       </div>
       <div class="linkloop-results-header">
         <div class="linkloop-header-main">
-          <h3>SYSTEM_INITIALIZING...</h3>
+          <h3>SYSTEM_AUDIT_STABILIZATION...</h3>
         </div>
       </div>
     `;

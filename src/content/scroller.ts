@@ -78,15 +78,20 @@ export class PageScroller {
         break; 
       }
 
+      const screenshot = await chrome.runtime.sendMessage({ type: 'GET_SCREENSHOT' });
+
       const data: CaptureData = {
         msg: 'capture',
         x: window.scrollX,
         y: window.scrollY,
+        width: windowWidth,
+        height: windowHeight,
         complete: (i + 1) / numArrangements,
         windowWidth: windowWidth,
         totalWidth: fullWidth,
         totalHeight: fullHeight,
-        devicePixelRatio: window.devicePixelRatio
+        devicePixelRatio: window.devicePixelRatio,
+        screenshot: screenshot
       };
 
       const success = await callback(data);

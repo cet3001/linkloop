@@ -9,11 +9,14 @@ export interface CaptureData {
   msg: 'capture';
   x: number;
   y: number;
+  width: number;
+  height: number;
   complete: number;
   windowWidth: number;
   totalWidth: number;
   totalHeight: number;
   devicePixelRatio: number;
+  screenshot: string;
 }
 
 export interface OCRResult {
@@ -37,6 +40,7 @@ export type MessageType =
   | 'STITCH_IMAGE'
   | 'AI_PROCESS'
   | 'SHOW_RESULTS'
+  | 'GET_SCREENSHOT'
   | 'OPEN_OPTIONS';
 
 export interface Message {
