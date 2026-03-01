@@ -41,10 +41,12 @@ from chat_with_memory import (
 # Role must match a key in AGENT_ROLES in chat_with_memory.py
 # =====================================================
 AGENT_CONFIGS: dict[str, dict] = {
-    "tyrell":   {"role": "coder",      "use_shared_memory": True},
-    "tiana":    {"role": "researcher", "use_shared_memory": True},
-    "lamar":    {"role": "operator",   "use_shared_memory": True},
-    "latishia": {"role": "default",    "use_shared_memory": True},
+    "tyrell":   {"role": "coder",       "use_shared_memory": True},
+    "tiana":    {"role": "researcher",  "use_shared_memory": True},
+    "lamar":    {"role": "researcher",  "use_shared_memory": True},
+    "latishia": {"role": "marketer",    "use_shared_memory": True},
+    "tyrone":   {"role": "trader",      "use_shared_memory": True},
+    "leelee":   {"role": "coordinator", "use_shared_memory": True},
 }
 
 _started = False

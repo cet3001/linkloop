@@ -41,6 +41,7 @@ SANDBOX_ROOT.mkdir(exist_ok=True)
 # =====================================================
 AVAILABLE_MODELS = {
     "fast": "qwen3:14b",
+    "fast_small": "qwen3:8b",
     "coder": "qwen2.5-coder:32b-instruct-q4_K_M",
     "coder_fast": "qwen2.5-coder:7b-instruct",
 }
@@ -54,6 +55,9 @@ AGENT_ROLES = {
     "researcher": "You are a careful research analyst.",
     "coder": "You are a senior software engineer.",
     "operator": "You are a precise task execution specialist.",
+    "trader": "You are a crypto trading specialist focused on DeFi and on-chain signals.",
+    "coordinator": "You are a team coordinator managing agent workflows and accountability.",
+    "marketer": "You are a digital marketing engine focused on content and growth.",
 }
 
 CURRENT_AGENT_ROLE = "default"
