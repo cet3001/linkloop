@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cal-bg: #0f1117;
+  --cal-surface: #161b22;
+  --cal-panel: #1c2128;
+  --cal-border: #30363d;
+  --cal-text-primary: #e6edf3;
+  --cal-text-secondary: #8b949e;
+  --cal-accent: #5da9ff;
+  --cal-font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cal-font-editor: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas,
+    "Liberation Mono", monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--cal-bg);
+  color: var(--cal-text-primary);
+  font-family: var(--cal-font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+textarea,
+input,
+button {
+  font-family: var(--cal-font-ui);
+}
+
+.monaco-editor,
+.monaco-editor * {
+  font-family: var(--cal-font-editor) !important;
+}

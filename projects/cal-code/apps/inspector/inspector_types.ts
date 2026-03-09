@@ -1,0 +1,28 @@
+export interface InspectorData {
+  sessionId?: string;
+  goal: string;
+  sessionStatus: "running" | "completed" | "failed";
+  stepsCompleted: number;
+  stepsRemaining: number;
+  plan: string[];
+  toolsUsed: string[];
+  filesModified: string[];
+  modifiedFiles: string[];
+  currentBranch: string;
+  gitDiffSummary: string;
+  gitPolicyBlockedOperation: string;
+  patchGuardBlockedReason: string;
+  taskQueueLength: number;
+  activeWorkerTask: string;
+  repoModifiedFiles: string[];
+  repoUntrackedFiles: string[];
+  executionTrace: string[];
+  terminalCommandsUsed: string[];
+  verificationCommands: string[];
+  verificationResult: string;
+  verificationDuration: number;
+  lastCommand: string;
+  executionDuration: number;
+  durationMs: number;
+  confidence: number;
+}
