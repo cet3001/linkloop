@@ -1,10 +1,11 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   clearActivity,
   getActivityEvents,
 } from "../../../../activity/activity_logger";
 import { subscribeToActivity } from "../../../../activity/activity_stream";
 import { ActivityEvent, ActivityType } from "../../../../activity/activity_types";
+import { subscribeToModelStream } from "../../../../ai-core/runtime/model_stream";
 import { theme } from "../design/theme";
 
 type Role = "user" | "assistant";
@@ -20,7 +21,7 @@ interface ProjectContextShape {
 }
 
 interface ToolRuntimeModule {
-  runToolAwareConversation: (prompt: string) => Promise<string>;
+  runToolAwareConversation: (prompt: string, sessionId?: string) => Promise<string>;
 }
 
 interface ContextBuilderModule {
@@ -35,11 +36,27 @@ function buildMessage(role: Role, content: string): ChatMessage {
   };
 }
 
+function appendTokenToMessage(
+  items: ChatMessage[],
+  messageId: string,
+  token: string
+): ChatMessage[] {
+  return items.map((item) =>
+    item.id === messageId
+      ? {
+          ...item,
+          content: `${item.content}${token}`,
+        }
+      : item
+  );
+}
+
 export function ChatPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const streamFlushTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const canSend = useMemo(
     () => input.trim().length > 0 && !isSending,
@@ -53,7 +70,13 @@ export function ChatPanel() {
         [...prev, event].sort((a, b) => a.timestamp - b.timestamp)
       );
     });
-    return unsubscribe;
+    return () => {
+      if (streamFlushTimer.current) {
+        clearTimeout(streamFlushTimer.current);
+        streamFlushTimer.current = null;
+      }
+      unsubscribe();
+    };
   }, []);
 
   function getActivityIcon(type: ActivityType): string {
@@ -126,6 +149,32 @@ export function ChatPanel() {
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsSending(true);
+    const streamSessionId = `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const assistantMessage = buildMessage("assistant", "");
+    setMessages((prev) => [...prev, assistantMessage]);
+    let streamedText = "";
+    let tokenBuffer = "";
+
+    const flushTokenBuffer = () => {
+      const nextChunk = tokenBuffer;
+      tokenBuffer = "";
+      streamFlushTimer.current = null;
+      if (!nextChunk) {
+        return;
+      }
+      streamedText += nextChunk;
+      setMessages((prev) => appendTokenToMessage(prev, assistantMessage.id, nextChunk));
+    };
+
+    const unsubscribeStream = subscribeToModelStream((event) => {
+      if (event.sessionId !== streamSessionId) {
+        return;
+      }
+      tokenBuffer += event.token;
+      if (!streamFlushTimer.current) {
+        streamFlushTimer.current = setTimeout(flushTokenBuffer, 16);
+      }
+    });
 
     try {
       const contextPrompt = await buildContextPrompt(prompt);
@@ -133,17 +182,37 @@ export function ChatPanel() {
       const { runToolAwareConversation } = (await import(
         /* @vite-ignore */ toolRuntimeModulePath
       )) as ToolRuntimeModule;
-      const responseText = await runToolAwareConversation(contextPrompt);
-      const assistantMessage = buildMessage("assistant", responseText);
-      setMessages((prev) => [...prev, assistantMessage]);
+      const responseText = await runToolAwareConversation(contextPrompt, streamSessionId);
+      if (!streamedText && responseText) {
+        setMessages((prev) =>
+          prev.map((item) =>
+            item.id === assistantMessage.id
+              ? {
+                  ...item,
+                  content: responseText,
+                }
+              : item
+          )
+        );
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const assistantMessage = buildMessage(
-        "assistant",
-        `Failed to reach local Ollama runtime: ${message}`
+      setMessages((prev) =>
+        prev.map((item) =>
+          item.id === assistantMessage.id
+            ? {
+                ...item,
+                content: `Failed to reach local Ollama runtime: ${message}`,
+              }
+            : item
+        )
       );
-      setMessages((prev) => [...prev, assistantMessage]);
     } finally {
+      if (streamFlushTimer.current) {
+        clearTimeout(streamFlushTimer.current);
+        flushTokenBuffer();
+      }
+      unsubscribeStream();
       setIsSending(false);
       clearActivity();
       setActivityEvents([]);

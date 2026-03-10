@@ -2,9 +2,81 @@ import { AIRequest, AIResponse } from "../types/ai_types";
 
 const OLLAMA_TIMEOUT_MS = 60000;
 
+interface OllamaStreamChunk {
+  response?: string;
+  done?: boolean;
+}
+
+function createRequestBody(request: AIRequest): string {
+  return JSON.stringify({
+    model: request.model,
+    prompt: request.prompt,
+    stream: true,
+  });
+}
+
+async function readStreamingResponse(
+  response: Response,
+  onToken?: (token: string) => void
+): Promise<string> {
+  if (!response.body) {
+    throw new Error("Ollama streaming response body is unavailable.");
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) {
+        continue;
+      }
+      const chunk = JSON.parse(trimmed) as OllamaStreamChunk;
+      const token = typeof chunk.response === "string" ? chunk.response : "";
+      if (!token) {
+        continue;
+      }
+      text += token;
+      onToken?.(token);
+    }
+  }
+
+  const trailing = buffer.trim();
+  if (trailing) {
+    const chunk = JSON.parse(trailing) as OllamaStreamChunk;
+    const token = typeof chunk.response === "string" ? chunk.response : "";
+    if (token) {
+      text += token;
+      onToken?.(token);
+    }
+  }
+
+  return text;
+}
+
 export async function generateResponse(
   request: AIRequest
 ): Promise<AIResponse> {
+  const text = await streamGenerateResponse(request);
+  return { text };
+}
+
+export async function streamGenerateResponse(
+  request: AIRequest,
+  onToken?: (token: string) => void
+): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
 
@@ -13,11 +85,7 @@ export async function generateResponse(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      model: request.model,
-      prompt: request.prompt,
-      stream: false,
-    }),
+    body: createRequestBody(request),
     signal: controller.signal,
   }).finally(() => {
     clearTimeout(timeout);
@@ -28,12 +96,5 @@ export async function generateResponse(
     throw new Error(`Ollama request failed (${response.status}): ${body}`);
   }
 
-  const data = (await response.json()) as { response?: string };
-  if (typeof data.response !== "string") {
-    throw new Error("Ollama response did not include generated text.");
-  }
-
-  return {
-    text: data.response,
-  };
+  return readStreamingResponse(response, onToken);
 }

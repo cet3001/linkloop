@@ -62,6 +62,8 @@ export function InspectorPanel() {
               <h3 className="text-xs uppercase tracking-wide mb-1">Task Summary</h3>
               <p className="text-sm whitespace-pre-wrap">{data.goal || "N/A"}</p>
               <p className="text-sm">Session ID: {data.sessionId || "N/A"}</p>
+              <p className="text-sm">Model Role: {data.modelRole || "N/A"}</p>
+              <p className="text-sm">Model Used: {data.modelUsed || "N/A"}</p>
               <p className="text-sm">Session Status: {data.sessionStatus}</p>
               <p className="text-sm">Steps Completed: {data.stepsCompleted}</p>
               <p className="text-sm">Steps Remaining: {data.stepsRemaining}</p>

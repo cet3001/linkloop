@@ -98,7 +98,7 @@ Return only JSON patch in this shape:
 `.trim();
 
   try {
-    const response = await runCodingTask(prompt);
+    const response = await runCodingTask(prompt, request.sessionId);
     return parseCodePatch(response.text);
   } catch {
     return null;
@@ -112,6 +112,8 @@ export async function runCodeEditorAgent(
   logActivity("thinking", `Preparing edit request for ${request.file}`);
   setInspectorData({
     sessionId: request.sessionId ?? "",
+    modelRole: "",
+    modelUsed: "",
     goal: request.instruction,
     sessionStatus: "running",
     stepsCompleted: 0,
@@ -148,7 +150,10 @@ export async function runCodeEditorAgent(
   let patch: CodePatch;
   try {
     const response = await Promise.race([
-      runCodingTask(buildPrompt(request.file, currentFile, request.instruction)),
+      runCodingTask(
+        buildPrompt(request.file, currentFile, request.instruction),
+        request.sessionId
+      ),
       new Promise<{ text: string }>((_, reject) => {
         setTimeout(() => reject(new Error("Edit generation timed out.")), 20000);
       }),

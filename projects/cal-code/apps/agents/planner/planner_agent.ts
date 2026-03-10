@@ -1,5 +1,4 @@
-import { generateResponse } from "../../ai-core/ollama/ollama_client";
-import { getModelForTask } from "../../../packages/model-router/model_router";
+import { runPlanningTask } from "../../ai-core/runtime/ai_runtime";
 import { logActivity } from "../../activity/activity_logger";
 import { addReplayEvent } from "../../replay/replay_store";
 import { updateInspectorData } from "../../inspector/inspector_store";
@@ -139,12 +138,8 @@ export async function generateExecutionPlan(
 
   let responseText: string;
   try {
-    const planningModel = getModelForTask("planning");
     const response = await Promise.race([
-      generateResponse({
-        model: planningModel,
-        prompt: buildPlannerPrompt(goal, repositoryState),
-      }),
+      runPlanningTask(buildPlannerPrompt(goal, repositoryState), sessionId),
       new Promise<{ text: string }>((_, reject) => {
         setTimeout(
           () => reject(new Error("Planning model timed out.")),

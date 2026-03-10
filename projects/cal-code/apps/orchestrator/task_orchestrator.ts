@@ -216,6 +216,8 @@ export async function runTaskOrchestrator(goal: string): Promise<TaskResult> {
 
       setInspectorData({
         sessionId: session.id,
+        modelRole: existing?.modelRole ?? "",
+        modelUsed: existing?.modelUsed ?? "",
         goal,
         sessionStatus: failedSession?.status ?? "failed",
         stepsCompleted: failedSession?.stepsCompleted ?? successfulSteps,
@@ -290,6 +292,8 @@ export async function runTaskOrchestrator(goal: string): Promise<TaskResult> {
   const existing = getInspectorData();
   setInspectorData({
     sessionId: session.id,
+    modelRole: existing?.modelRole ?? "",
+    modelUsed: existing?.modelUsed ?? "",
     ...current,
     toolsUsed: existing?.toolsUsed ?? [],
     filesModified: existing?.filesModified ?? [],

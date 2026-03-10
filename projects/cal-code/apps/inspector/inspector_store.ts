@@ -18,6 +18,8 @@ function ensureData(): InspectorData {
   if (!inspectorData) {
     inspectorData = {
       sessionId: "",
+      modelRole: "",
+      modelUsed: "",
       goal: "",
       sessionStatus: "running",
       stepsCompleted: 0,
@@ -85,6 +87,8 @@ export function updateInspectorData(
     ...current,
     ...update,
     sessionId: update.sessionId ?? current.sessionId,
+    modelRole: update.modelRole ?? current.modelRole,
+    modelUsed: update.modelUsed ?? current.modelUsed,
     sessionStatus: update.sessionStatus ?? current.sessionStatus,
     stepsCompleted: update.stepsCompleted ?? current.stepsCompleted,
     stepsRemaining: update.stepsRemaining ?? current.stepsRemaining,

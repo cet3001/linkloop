@@ -1,5 +1,7 @@
 export interface InspectorData {
   sessionId?: string;
+  modelRole: string;
+  modelUsed: string;
   goal: string;
   sessionStatus: "running" | "completed" | "failed";
   stepsCompleted: number;
